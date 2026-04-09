@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Poker Face Dev Server",
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["/Users/ofekivri/Poker face/node_modules/.bin/vite"],
+      "port": 5173
+    }
+  ]
+}

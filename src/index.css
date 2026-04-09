@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-profit-green: #a3e635;
+  --color-profit-gold: #d4af37;
+  --font-family-headline: "Inter", sans-serif;
+  --font-family-body: "Inter", sans-serif;
+  --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(220, 38, 38, 0.4); }
+  50% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.8); }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: #09090b; /* zinc-950 */
+  color: #e4e4e7; /* zinc-200 */
+}
+
+#root {
+  min-height: 100svh;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.neon-glow-red {
+  box-shadow: 0 0 15px rgba(204, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: rgba(31, 31, 31, 0.7);
+  backdrop-filter: blur(12px);
+}
