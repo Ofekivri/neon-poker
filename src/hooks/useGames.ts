@@ -49,6 +49,52 @@ export function useGames() {
     [setGames]
   );
 
+  const removeBuyIn = useCallback(
+    (gameId: string, playerId: string, buyInIndex: number) => {
+      setGames((prev) =>
+        prev.map((game) => {
+          if (game.id !== gameId) return game;
+          return {
+            ...game,
+            players: game.players.map((gp) => {
+              if (gp.playerId !== playerId) return gp;
+              // Don't allow removing the last buy-in
+              if (gp.buyIns.length <= 1) return gp;
+              return {
+                ...gp,
+                buyIns: gp.buyIns.filter((_, i) => i !== buyInIndex),
+              };
+            }),
+          };
+        })
+      );
+    },
+    [setGames]
+  );
+
+  const updateBuyIn = useCallback(
+    (gameId: string, playerId: string, buyInIndex: number, newAmount: number) => {
+      setGames((prev) =>
+        prev.map((game) => {
+          if (game.id !== gameId) return game;
+          return {
+            ...game,
+            players: game.players.map((gp) => {
+              if (gp.playerId !== playerId) return gp;
+              return {
+                ...gp,
+                buyIns: gp.buyIns.map((b, i) =>
+                  i === buyInIndex ? { ...b, amount: newAmount } : b
+                ),
+              };
+            }),
+          };
+        })
+      );
+    },
+    [setGames]
+  );
+
   const completeGame = useCallback(
     (
       gameId: string,
@@ -111,6 +157,8 @@ export function useGames() {
     completedGames,
     createGame,
     addBuyIn,
+    removeBuyIn,
+    updateBuyIn,
     addPlayerToGame,
     completeGame,
     getGame,

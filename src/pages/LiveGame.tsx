@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
 import { usePlayers } from '../hooks/usePlayers';
+import { useToast } from '../hooks/useToast';
+import ToastContainer from '../components/ToastContainer';
 import { calculateSettlements, computeNetBalances } from '../utils/settlement';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -185,6 +187,168 @@ function EndGameModal({
   );
 }
 
+/* ─── Manage Buy-ins Modal ─── */
+function ManageBuyInsModal({
+  playerName,
+  buyIns,
+  onRemove,
+  onUpdate,
+  onClose,
+}: {
+  playerName: string;
+  buyIns: { amount: number; timestamp: string }[];
+  onRemove: (index: number) => void;
+  onUpdate: (index: number, newAmount: number) => void;
+  onClose: () => void;
+}) {
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editAmount, setEditAmount] = useState(0);
+  const [confirmRemove, setConfirmRemove] = useState<number | null>(null);
+  const total = buyIns.reduce((s, b) => s + b.amount, 0);
+
+  const startEdit = (idx: number, amount: number) => {
+    setEditIndex(idx);
+    setEditAmount(amount);
+    setConfirmRemove(null);
+  };
+
+  const saveEdit = () => {
+    if (editIndex !== null && editAmount >= 1) {
+      onUpdate(editIndex, editAmount);
+      setEditIndex(null);
+    }
+  };
+
+  const handleRemove = (idx: number) => {
+    if (confirmRemove === idx) {
+      onRemove(idx);
+      setConfirmRemove(null);
+    } else {
+      setConfirmRemove(idx);
+      setEditIndex(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-end justify-center z-[60]">
+      <div className="bg-zinc-900 border-t border-zinc-700 w-full max-w-lg rounded-t-2xl p-6 space-y-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-white font-black text-lg uppercase tracking-tight">{playerName}</h3>
+            <p className="text-zinc-500 text-xs">Manage buy-ins · Total: <span className="text-white font-bold">₪{total}</span></p>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white p-1">
+            <Icon name="close" />
+          </button>
+        </div>
+
+        <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+          {buyIns.map((b, idx) => {
+            const time = new Date(b.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const isEditing = editIndex === idx;
+            const isConfirmingRemove = confirmRemove === idx;
+            const isLastBuyIn = buyIns.length === 1;
+
+            return (
+              <div key={idx} className="bg-zinc-800/50 border border-zinc-800 rounded-xl px-4 py-3 space-y-2">
+                {isEditing ? (
+                  /* Edit mode */
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500 text-xs uppercase font-bold">Edit Buy-in #{idx + 1}</span>
+                      <span className="text-zinc-600 text-xs">{time}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setEditAmount(v => Math.max(10, v - 10))}
+                        className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
+                        <Icon name="remove" className="!text-sm" />
+                      </button>
+                      <div className="flex-1 text-center">
+                        <span className="text-2xl font-black text-white">{editAmount}</span>
+                        <span className="text-zinc-500 ml-1">₪</span>
+                      </div>
+                      <button onClick={() => setEditAmount(v => v + 10)}
+                        className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
+                        <Icon name="add" className="!text-sm" />
+                      </button>
+                    </div>
+                    <div className="flex gap-2 justify-center">
+                      {[20, 50, 100, 200].map((v) => (
+                        <button key={v} onClick={() => setEditAmount(v)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${editAmount === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400'}`}>
+                          {v}₪
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditIndex(null)}
+                        className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm rounded-lg py-2">
+                        Cancel
+                      </button>
+                      <button onClick={saveEdit}
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg py-2">
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Display mode */
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-zinc-900 w-8 h-8 rounded-lg flex items-center justify-center border border-zinc-700">
+                        <span className="text-zinc-400 text-xs font-black">#{idx + 1}</span>
+                      </div>
+                      <div>
+                        <span className="text-white font-bold">₪{b.amount}</span>
+                        <p className="text-zinc-600 text-[10px]">{time}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => startEdit(idx, b.amount)}
+                        className="text-zinc-600 hover:text-yellow-400 p-1.5 rounded-lg hover:bg-zinc-800 transition-colors">
+                        <Icon name="edit" className="!text-lg" />
+                      </button>
+                      {!isLastBuyIn && (
+                        <button onClick={() => handleRemove(idx)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            isConfirmingRemove
+                              ? 'text-red-400 bg-red-900/30'
+                              : 'text-zinc-600 hover:text-red-400 hover:bg-zinc-800'
+                          }`}>
+                          <Icon name={isConfirmingRemove ? 'delete_forever' : 'delete'} className="!text-lg" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {isConfirmingRemove && !isEditing && (
+                  <div className="flex items-center gap-2 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">
+                    <Icon name="warning" className="text-red-400 !text-sm" />
+                    <span className="text-red-400 text-xs font-bold flex-1">Remove ₪{b.amount} buy-in?</span>
+                    <button onClick={() => setConfirmRemove(null)}
+                      className="text-zinc-400 text-xs font-bold hover:text-white px-2 py-1">
+                      No
+                    </button>
+                    <button onClick={() => { onRemove(idx); setConfirmRemove(null); }}
+                      className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-lg">
+                      Yes
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <button onClick={onClose}
+          className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-2xl py-4 transition-colors uppercase tracking-widest">
+          Done
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Add Player to Table Modal ─── */
 function AddPlayerModal({
   currentPlayerIds,
@@ -302,10 +466,12 @@ function AddPlayerModal({
 export default function LiveGame() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getGame, addBuyIn, addPlayerToGame, completeGame } = useGames();
+  const { getGame, addBuyIn, removeBuyIn, updateBuyIn, addPlayerToGame, completeGame } = useGames();
   const { players: allRosterPlayers, getPlayer } = usePlayers();
 
+  const { toasts, showToast, dismissToast } = useToast();
   const [buyInTarget, setBuyInTarget] = useState<string | null>(null);
+  const [manageBuyInsTarget, setManageBuyInsTarget] = useState<string | null>(null);
   const [showEndGame, setShowEndGame] = useState(false);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
 
@@ -330,6 +496,7 @@ export default function LiveGame() {
   const handleBuyIn = (amount: number) => {
     if (!buyInTarget || !id) return;
     addBuyIn(id, buyInTarget, amount);
+    showToast(`₪${amount} buy-in added for ${getPlayerName(buyInTarget)}`);
     setBuyInTarget(null);
   };
 
@@ -344,11 +511,13 @@ export default function LiveGame() {
   };
 
   return (
-    <div className="space-y-6 -mx-6 -mt-24 pt-20 px-4 pb-40"
+    <div className="space-y-6 -mx-6 -mt-24 pt-20 px-4 pb-40 relative"
       style={{
         backgroundImage: 'linear-gradient(to right, #1f1f1f 1px, transparent 1px), linear-gradient(to bottom, #1f1f1f 1px, transparent 1px)',
         backgroundSize: '40px 40px',
       }}>
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Elapsed timer in header area */}
       <div className="flex items-center justify-between px-2">
@@ -430,19 +599,19 @@ export default function LiveGame() {
               {/* Quick buy-in buttons */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => id && addBuyIn(id, gp.playerId, 50)}
+                  onClick={() => { if (id) { addBuyIn(id, gp.playerId, 50); showToast(`₪50 buy-in added for ${name}`); } }}
                   className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 active:scale-95 transition-all"
                 >
                   +50
                 </button>
                 <button
-                  onClick={() => id && addBuyIn(id, gp.playerId, 100)}
+                  onClick={() => { if (id) { addBuyIn(id, gp.playerId, 100); showToast(`₪100 buy-in added for ${name}`); } }}
                   className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 active:scale-95 transition-all"
                 >
                   +100
                 </button>
                 <button
-                  onClick={() => setBuyInTarget(gp.playerId)}
+                  onClick={() => setManageBuyInsTarget(gp.playerId)}
                   className="material-symbols-outlined text-zinc-500 hover:text-red-500 transition-colors p-2"
                 >
                   more_vert
@@ -482,6 +651,32 @@ export default function LiveGame() {
         />
       )}
 
+      {/* Manage buy-ins modal */}
+      {manageBuyInsTarget && (() => {
+        const gp = game.players.find(p => p.playerId === manageBuyInsTarget);
+        if (!gp) return null;
+        const pName = getPlayerName(manageBuyInsTarget);
+        return (
+          <ManageBuyInsModal
+            playerName={pName}
+            buyIns={gp.buyIns}
+            onRemove={(idx) => {
+              if (!id) return;
+              const amt = gp.buyIns[idx]?.amount;
+              removeBuyIn(id, manageBuyInsTarget, idx);
+              showToast(`₪${amt} buy-in removed from ${pName}`, 'error');
+            }}
+            onUpdate={(idx, amt) => {
+              if (!id) return;
+              const oldAmt = gp.buyIns[idx]?.amount;
+              updateBuyIn(id, manageBuyInsTarget, idx, amt);
+              showToast(`${pName}'s buy-in updated: ₪${oldAmt} → ₪${amt}`, 'info');
+            }}
+            onClose={() => setManageBuyInsTarget(null)}
+          />
+        );
+      })()}
+
       {/* End game modal */}
       {showEndGame && (
         <EndGameModal
@@ -499,7 +694,10 @@ export default function LiveGame() {
           currentPlayerIds={game.players.map((gp) => gp.playerId)}
           allPlayers={allRosterPlayers}
           onAdd={(playerId, buyIn) => {
-            if (id) addPlayerToGame(id, playerId, buyIn);
+            if (id) {
+              addPlayerToGame(id, playerId, buyIn);
+              showToast(`${getPlayerName(playerId)} joined the table with ₪${buyIn}`);
+            }
             setShowAddPlayer(false);
           }}
           onClose={() => setShowAddPlayer(false)}
