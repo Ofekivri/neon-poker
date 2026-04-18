@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayers } from '../hooks/usePlayers';
 import { useGames } from '../hooks/useGames';
+import { useSettings } from '../hooks/useSettings';
 import { shekelToChips } from '../utils/chips';
 import { useAuthContext } from '../contexts/AuthContext';
 import type { ChipRate } from '../types';
@@ -15,12 +16,16 @@ export default function NewGame() {
   const { user } = useAuthContext();
   const { players } = usePlayers(user.uid);
   const { createGame, activeGame } = useGames(user.uid);
+  const { settings } = useSettings(user.uid);
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [buyIn, setBuyIn] = useState(50);
+  const [buyIn, setBuyIn] = useState<number | null>(null);
   const [chipRateEnabled, setChipRateEnabled] = useState(false);
   const [chipRateShekel, setChipRateShekel] = useState(20);
   const [chipRateChips, setChipRateChips] = useState(600);
+
+  // Use settings default if user hasn't changed buy-in yet
+  const effectiveBuyIn = buyIn ?? settings.defaultBuyIn;
 
   if (activeGame) {
     navigate(`/game/${activeGame.id}`, { replace: true });
@@ -39,11 +44,11 @@ export default function NewGame() {
     ? { shekelAmount: chipRateShekel, chipAmount: chipRateChips }
     : undefined;
 
-  const startingChips = chipRate ? shekelToChips(buyIn, chipRate) : null;
+  const startingChips = chipRate ? shekelToChips(effectiveBuyIn, chipRate) : null;
 
   const handleStart = async () => {
     if (selected.size < 2) return;
-    const game = await createGame([...selected], buyIn, chipRate);
+    const game = await createGame([...selected], effectiveBuyIn, chipRate);
     navigate(`/game/${game.id}`, { replace: true });
   };
 
@@ -59,18 +64,18 @@ export default function NewGame() {
       <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
         <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">Starting Buy-In</p>
         <div className="flex items-center justify-between">
-          <button onClick={() => setBuyIn(v => Math.max(10, v - 10))}
+          <button onClick={() => setBuyIn(Math.max(10, effectiveBuyIn - 10))}
             className="w-12 h-12 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700 transition-colors">
             <Icon name="remove" />
           </button>
           <div className="text-center">
-            <span className="text-4xl font-black text-white">{buyIn}</span>
+            <span className="text-4xl font-black text-white">{effectiveBuyIn}</span>
             <span className="text-xl text-zinc-500 ml-1">₪</span>
             {startingChips !== null && (
               <p className="text-xs text-red-400 font-bold mt-1">= {startingChips.toLocaleString()} chips</p>
             )}
           </div>
-          <button onClick={() => setBuyIn(v => v + 10)}
+          <button onClick={() => setBuyIn(effectiveBuyIn + 10)}
             className="w-12 h-12 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700 transition-colors">
             <Icon name="add" />
           </button>
@@ -79,7 +84,7 @@ export default function NewGame() {
           {[20, 50, 100, 200].map((v) => (
             <button key={v} onClick={() => setBuyIn(v)}
               className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-colors ${
-                buyIn === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white'
+                effectiveBuyIn === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white'
               }`}>
               {v}₪
             </button>

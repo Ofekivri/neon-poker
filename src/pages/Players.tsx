@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePlayers } from '../hooks/usePlayers';
 import { useGames } from '../hooks/useGames';
 import { computeNetBalances } from '../utils/settlement';
@@ -17,6 +18,7 @@ function Icon({ name, className = '', fill = false }: { name: string; className?
 
 export default function Players() {
   const { user } = useAuthContext();
+  const navigate = useNavigate();
   const { players, addPlayer, updatePlayer, deletePlayer } = usePlayers(user.uid);
   const { completedGames } = useGames(user.uid);
   const [newName, setNewName] = useState('');
@@ -140,7 +142,8 @@ export default function Players() {
             return (
               <div
                 key={player.id}
-                className="bg-[#1f1f1f] border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:bg-[#2a2a2a] transition-colors"
+                className="bg-[#1f1f1f] border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:bg-[#2a2a2a] transition-colors cursor-pointer"
+                onClick={() => !isEditing && navigate(`/player/${player.id}`)}
               >
                 <div
                   className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
@@ -194,13 +197,13 @@ export default function Players() {
                       </span>
                       <div className="flex gap-1">
                         <button
-                          onClick={() => startEdit(player.id, player.name)}
+                          onClick={(e) => { e.stopPropagation(); startEdit(player.id, player.name); }}
                           className="text-zinc-600 hover:text-zinc-400"
                         >
                           <Icon name="edit" className="text-lg" />
                         </button>
                         <button
-                          onClick={() => deletePlayer(player.id)}
+                          onClick={(e) => { e.stopPropagation(); deletePlayer(player.id); }}
                           className="text-zinc-600 hover:text-red-400"
                         >
                           <Icon name="delete" className="text-lg" />

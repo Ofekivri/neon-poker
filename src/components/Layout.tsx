@@ -118,8 +118,14 @@ export default function Layout() {
           <span className="text-[10px] font-bold uppercase tracking-widest">Players</span>
         </NavLink>
         <NavLink
-          to="/players"
-          className="flex flex-col items-center justify-center text-zinc-500 hover:text-zinc-200 px-4 py-1 rounded-xl active:scale-110 duration-150"
+          to="/settings"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center px-4 py-1 rounded-xl active:scale-110 duration-150 ${
+              isActive
+                ? 'text-red-600 bg-red-950/20'
+                : 'text-zinc-500 hover:text-zinc-200'
+            }`
+          }
         >
           <Icon name="settings" />
           <span className="text-[10px] font-bold uppercase tracking-widest">Settings</span>

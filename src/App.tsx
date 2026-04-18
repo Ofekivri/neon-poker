@@ -5,6 +5,8 @@ import Players from './pages/Players';
 import NewGame from './pages/NewGame';
 import LiveGame from './pages/LiveGame';
 import GameSummary from './pages/GameSummary';
+import PlayerProfile from './pages/PlayerProfile';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { useAuth } from './hooks/useAuth';
 import { AuthContext } from './contexts/AuthContext';
@@ -36,6 +38,8 @@ function App() {
             <Route path="game/new" element={<NewGame />} />
             <Route path="game/:id" element={<LiveGame />} />
             <Route path="game/:id/summary" element={<GameSummary />} />
+            <Route path="player/:playerId" element={<PlayerProfile />} />
+            <Route path="settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
