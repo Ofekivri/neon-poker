@@ -11,12 +11,15 @@ import type { Game, GamePlayer, Settlement, ChipRate } from '../types';
 
 export function useGames(uid: string | undefined) {
   const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!uid) {
       setGames([]);
+      setLoading(false);
       return;
     }
+    setLoading(true);
     const col = collection(db, 'users', uid, 'games');
     const unsubscribe = onSnapshot(col, (snapshot) => {
       const data: Game[] = snapshot.docs.map((d) => ({
@@ -24,6 +27,7 @@ export function useGames(uid: string | undefined) {
         ...(d.data() as Omit<Game, 'id'>),
       }));
       setGames(data);
+      setLoading(false);
     });
     return unsubscribe;
   }, [uid]);
@@ -188,6 +192,7 @@ export function useGames(uid: string | undefined) {
 
   return {
     games,
+    loading,
     activeGame,
     completedGames,
     createGame,

@@ -513,7 +513,7 @@ export default function LiveGame() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { getGame, addBuyIn, removeBuyIn, updateBuyIn, addPlayerToGame, completeGame } = useGames(user.uid);
+  const { getGame, addBuyIn, removeBuyIn, updateBuyIn, addPlayerToGame, completeGame, loading } = useGames(user.uid);
   const { players: allRosterPlayers, getPlayer } = usePlayers(user.uid);
 
   const { toasts, showToast, dismissToast } = useToast();
@@ -523,6 +523,16 @@ export default function LiveGame() {
   const [showAddPlayer, setShowAddPlayer] = useState(false);
 
   const game = id ? getGame(id) : undefined;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <span className="material-symbols-outlined text-red-600 text-5xl animate-spin">
+          progress_activity
+        </span>
+      </div>
+    );
+  }
 
   if (!game) return <Navigate to="/" replace />;
   if (game.status === 'completed') return <Navigate to={`/game/${id}/summary`} replace />;

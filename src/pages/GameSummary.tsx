@@ -20,10 +20,20 @@ export default function GameSummary() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { getGame } = useGames(user.uid);
+  const { getGame, loading } = useGames(user.uid);
   const { getPlayer } = usePlayers(user.uid);
 
   const game = id ? getGame(id) : undefined;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <span className="material-symbols-outlined text-red-600 text-5xl animate-spin">
+          progress_activity
+        </span>
+      </div>
+    );
+  }
 
   if (!game) return <Navigate to="/" replace />;
   if (game.status === 'active') return <Navigate to={`/game/${id}`} replace />;
