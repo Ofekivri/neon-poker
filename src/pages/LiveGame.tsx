@@ -5,6 +5,8 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useToast } from '../hooks/useToast';
 import ToastContainer from '../components/ToastContainer';
 import { calculateSettlements, computeNetBalances } from '../utils/settlement';
+import { chipsToShekel, shekelToChips } from '../utils/chips';
+import type { ChipRate } from '../types';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
@@ -86,18 +88,31 @@ function EndGameModal({
   onAddBuyIn,
   onConfirm,
   onClose,
+  chipRate,
 }: {
   players: { playerId: string; buyIns: { amount: number }[] }[];
   getPlayerName: (id: string) => string;
   onAddBuyIn: (playerId: string, amount: number) => void;
   onConfirm: (cashOuts: Record<string, number>) => void;
   onClose: () => void;
+  chipRate?: ChipRate;
 }) {
   const [cashOuts, setCashOuts] = useState<Record<string, string>>(
     Object.fromEntries(players.map((p) => [p.playerId, '']))
   );
+  const [chipCounts, setChipCounts] = useState<Record<string, string>>(
+    Object.fromEntries(players.map((p) => [p.playerId, '']))
+  );
   const [buyInOpen, setBuyInOpen] = useState<string | null>(null);
   const [buyInAmount, setBuyInAmount] = useState(50);
+
+  const handleChipInput = (playerId: string, chips: string) => {
+    setChipCounts(prev => ({ ...prev, [playerId]: chips }));
+    if (chipRate && chips !== '') {
+      const shekel = chipsToShekel(Number(chips), chipRate);
+      setCashOuts(prev => ({ ...prev, [playerId]: String(shekel) }));
+    }
+  };
 
   const totalPot = players.reduce((s, gp) => s + gp.buyIns.reduce((ss, b) => ss + b.amount, 0), 0);
   const totalCashOut = Object.values(cashOuts).reduce((sum, v) => sum + (parseFloat(v) || 0), 0);
@@ -159,6 +174,15 @@ function EndGameModal({
                     </div>
                   </div>
                 )}
+                {chipRate && (
+                  <div className="flex items-center gap-2">
+                    <input type="number" min="0" placeholder="Chips..."
+                      value={chipCounts[gp.playerId]}
+                      onChange={(e) => handleChipInput(gp.playerId, e.target.value)}
+                      className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-red-600 placeholder-zinc-600" />
+                    <span className="text-zinc-500 text-sm">chips</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <input type="number" min="0" placeholder="Cash out..."
                     value={cashOuts[gp.playerId]}
@@ -166,6 +190,11 @@ function EndGameModal({
                     className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-red-600 placeholder-zinc-600" />
                   <span className="text-zinc-500 text-sm">₪</span>
                 </div>
+                {chipRate && cashOuts[gp.playerId] !== '' && chipCounts[gp.playerId] !== '' && (
+                  <p className="text-xs text-zinc-500 font-mono">
+                    {Number(chipCounts[gp.playerId]).toLocaleString()} chips = <span className="text-red-400 font-bold">{cashOuts[gp.playerId]}₪</span>
+                  </p>
+                )}
               </div>
             );
           })}
@@ -685,6 +714,7 @@ export default function LiveGame() {
           onAddBuyIn={(playerId, amount) => id && addBuyIn(id, playerId, amount)}
           onConfirm={handleEndGame}
           onClose={() => setShowEndGame(false)}
+          chipRate={game.chipRate}
         />
       )}
 

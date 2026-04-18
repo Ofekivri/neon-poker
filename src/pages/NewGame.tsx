@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayers } from '../hooks/usePlayers';
 import { useGames } from '../hooks/useGames';
+import { shekelToChips } from '../utils/chips';
+import type { ChipRate } from '../types';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
@@ -14,6 +16,9 @@ export default function NewGame() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [buyIn, setBuyIn] = useState(50);
+  const [chipRateEnabled, setChipRateEnabled] = useState(false);
+  const [chipRateShekel, setChipRateShekel] = useState(20);
+  const [chipRateChips, setChipRateChips] = useState(600);
 
   if (activeGame) {
     navigate(`/game/${activeGame.id}`, { replace: true });
@@ -28,9 +33,15 @@ export default function NewGame() {
     });
   };
 
+  const chipRate: ChipRate | undefined = chipRateEnabled && chipRateShekel > 0 && chipRateChips > 0
+    ? { shekelAmount: chipRateShekel, chipAmount: chipRateChips }
+    : undefined;
+
+  const startingChips = chipRate ? shekelToChips(buyIn, chipRate) : null;
+
   const handleStart = () => {
     if (selected.size < 2) return;
-    const game = createGame([...selected], buyIn);
+    const game = createGame([...selected], buyIn, chipRate);
     navigate(`/game/${game.id}`, { replace: true });
   };
 
@@ -53,6 +64,9 @@ export default function NewGame() {
           <div className="text-center">
             <span className="text-4xl font-black text-white">{buyIn}</span>
             <span className="text-xl text-zinc-500 ml-1">₪</span>
+            {startingChips !== null && (
+              <p className="text-xs text-red-400 font-bold mt-1">= {startingChips.toLocaleString()} chips</p>
+            )}
           </div>
           <button onClick={() => setBuyIn(v => v + 10)}
             className="w-12 h-12 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700 transition-colors">
@@ -69,6 +83,58 @@ export default function NewGame() {
             </button>
           ))}
         </div>
+      </section>
+
+      {/* Chip Rate */}
+      <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Chip Rate</p>
+          <button
+            onClick={() => setChipRateEnabled(v => !v)}
+            className={`relative w-12 h-6 rounded-full transition-colors ${chipRateEnabled ? 'bg-red-600' : 'bg-zinc-700'}`}
+          >
+            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${chipRateEnabled ? 'left-7' : 'left-1'}`} />
+          </button>
+        </div>
+
+        {chipRateEnabled && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <p className="text-zinc-600 text-xs uppercase font-bold mb-1">₪ Amount</p>
+                <input
+                  type="number"
+                  value={chipRateShekel}
+                  onChange={e => setChipRateShekel(Number(e.target.value))}
+                  className="w-full bg-zinc-800 border border-zinc-700 text-white font-bold rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-red-600"
+                  min={1}
+                />
+              </div>
+              <span className="text-zinc-500 font-black text-xl mt-5">=</span>
+              <div className="flex-1">
+                <p className="text-zinc-600 text-xs uppercase font-bold mb-1">Chips</p>
+                <input
+                  type="number"
+                  value={chipRateChips}
+                  onChange={e => setChipRateChips(Number(e.target.value))}
+                  className="w-full bg-zinc-800 border border-zinc-700 text-white font-bold rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-red-600"
+                  min={1}
+                />
+              </div>
+            </div>
+            {chipRate && (
+              <p className="text-center text-zinc-400 text-xs font-bold">
+                Each player starts with{' '}
+                <span className="text-red-400">{shekelToChips(buyIn, chipRate).toLocaleString()} chips</span>
+                {' '}for {buyIn}₪
+              </p>
+            )}
+          </div>
+        )}
+
+        {!chipRateEnabled && (
+          <p className="text-zinc-600 text-xs">Enable to track chip counts alongside ₪ amounts</p>
+        )}
       </section>
 
       {/* Player Selection */}

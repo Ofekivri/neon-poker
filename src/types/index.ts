@@ -21,10 +21,16 @@ export interface Settlement {
   amount: number;
 }
 
+export interface ChipRate {
+  shekelAmount: number; // e.g. 20
+  chipAmount: number;   // e.g. 600
+}
+
 export interface Game {
   id: string;
   date: string;
   status: 'active' | 'completed';
   players: GamePlayer[];
   settlements?: Settlement[];
+  chipRate?: ChipRate;
 }

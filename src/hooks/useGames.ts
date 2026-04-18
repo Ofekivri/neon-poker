@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import type { Game, GamePlayer, Settlement } from '../types';
+import type { Game, GamePlayer, Settlement, ChipRate } from '../types';
 
 const STORAGE_KEY = 'poker_games';
 
@@ -8,7 +8,7 @@ export function useGames() {
   const [games, setGames] = useLocalStorage<Game[]>(STORAGE_KEY, []);
 
   const createGame = useCallback(
-    (playerIds: string[], initialBuyIn: number): Game => {
+    (playerIds: string[], initialBuyIn: number, chipRate?: ChipRate): Game => {
       const newGame: Game = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
@@ -17,6 +17,7 @@ export function useGames() {
           playerId,
           buyIns: [{ amount: initialBuyIn, timestamp: new Date().toISOString() }],
         })),
+        ...(chipRate ? { chipRate } : {}),
       };
       setGames((prev) => [newGame, ...prev]);
       return newGame;
