@@ -1,39 +1,64 @@
-import { useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import type { Player } from '../types';
 
-const STORAGE_KEY = 'poker_players';
+export function usePlayers(uid: string | undefined) {
+  const [players, setPlayers] = useState<Player[]>([]);
 
-export function usePlayers() {
-  const [players, setPlayers] = useLocalStorage<Player[]>(STORAGE_KEY, []);
+  useEffect(() => {
+    if (!uid) {
+      setPlayers([]);
+      return;
+    }
+    const col = collection(db, 'users', uid, 'players');
+    const unsubscribe = onSnapshot(col, (snapshot) => {
+      const data: Player[] = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<Player, 'id'>),
+      }));
+      setPlayers(data);
+    });
+    return unsubscribe;
+  }, [uid]);
 
   const addPlayer = useCallback(
-    (name: string) => {
-      const newPlayer: Player = {
-        id: crypto.randomUUID(),
+    async (name: string) => {
+      if (!uid) return;
+      const col = collection(db, 'users', uid, 'players');
+      const payload = {
         name: name.trim(),
         createdAt: new Date().toISOString(),
       };
-      setPlayers((prev) => [...prev, newPlayer]);
-      return newPlayer;
+      const docRef = await addDoc(col, payload);
+      return { id: docRef.id, ...payload } as Player;
     },
-    [setPlayers]
+    [uid]
   );
 
   const updatePlayer = useCallback(
-    (id: string, name: string) => {
-      setPlayers((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, name: name.trim() } : p))
-      );
+    async (id: string, name: string) => {
+      if (!uid) return;
+      await updateDoc(doc(db, 'users', uid, 'players', id), {
+        name: name.trim(),
+      });
     },
-    [setPlayers]
+    [uid]
   );
 
   const deletePlayer = useCallback(
-    (id: string) => {
-      setPlayers((prev) => prev.filter((p) => p.id !== id));
+    async (id: string) => {
+      if (!uid) return;
+      await deleteDoc(doc(db, 'users', uid, 'players', id));
     },
-    [setPlayers]
+    [uid]
   );
 
   const getPlayer = useCallback(

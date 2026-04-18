@@ -3,6 +3,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
 import { usePlayers } from '../hooks/usePlayers';
 import { useToast } from '../hooks/useToast';
+import { useAuthContext } from '../contexts/AuthContext';
 import ToastContainer from '../components/ToastContainer';
 import { calculateSettlements, computeNetBalances } from '../utils/settlement';
 import { chipsToShekel, shekelToChips } from '../utils/chips';
@@ -511,8 +512,9 @@ function AddPlayerModal({
 export default function LiveGame() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getGame, addBuyIn, removeBuyIn, updateBuyIn, addPlayerToGame, completeGame } = useGames();
-  const { players: allRosterPlayers, getPlayer } = usePlayers();
+  const { user } = useAuthContext();
+  const { getGame, addBuyIn, removeBuyIn, updateBuyIn, addPlayerToGame, completeGame } = useGames(user.uid);
+  const { players: allRosterPlayers, getPlayer } = usePlayers(user.uid);
 
   const { toasts, showToast, dismissToast } = useToast();
   const [buyInTarget, setBuyInTarget] = useState<string | null>(null);

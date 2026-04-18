@@ -1,6 +1,7 @@
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
 import { usePlayers } from '../hooks/usePlayers';
+import { useAuthContext } from '../contexts/AuthContext';
 import { computeNetBalances } from '../utils/settlement';
 import { shekelToChips } from '../utils/chips';
 
@@ -18,8 +19,9 @@ function Icon({ name, className = '', fill = false }: { name: string; className?
 export default function GameSummary() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getGame } = useGames();
-  const { getPlayer } = usePlayers();
+  const { user } = useAuthContext();
+  const { getGame } = useGames(user.uid);
+  const { getPlayer } = usePlayers(user.uid);
 
   const game = id ? getGame(id) : undefined;
 

@@ -1,146 +1,180 @@
-import { useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  doc,
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import type { Game, GamePlayer, Settlement, ChipRate } from '../types';
 
-const STORAGE_KEY = 'poker_games';
+export function useGames(uid: string | undefined) {
+  const [games, setGames] = useState<Game[]>([]);
 
-export function useGames() {
-  const [games, setGames] = useLocalStorage<Game[]>(STORAGE_KEY, []);
+  useEffect(() => {
+    if (!uid) {
+      setGames([]);
+      return;
+    }
+    const col = collection(db, 'users', uid, 'games');
+    const unsubscribe = onSnapshot(col, (snapshot) => {
+      const data: Game[] = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<Game, 'id'>),
+      }));
+      setGames(data);
+    });
+    return unsubscribe;
+  }, [uid]);
 
   const createGame = useCallback(
-    (playerIds: string[], initialBuyIn: number, chipRate?: ChipRate): Game => {
-      const newGame: Game = {
-        id: crypto.randomUUID(),
+    async (
+      playerIds: string[],
+      initialBuyIn: number,
+      chipRate?: ChipRate
+    ): Promise<Game> => {
+      if (!uid) throw new Error('Not authenticated');
+      const col = collection(db, 'users', uid, 'games');
+      const players: GamePlayer[] = playerIds.map((playerId) => ({
+        playerId,
+        buyIns: [{ amount: initialBuyIn, timestamp: new Date().toISOString() }],
+      }));
+
+      const payload: Omit<Game, 'id'> = {
         date: new Date().toISOString(),
         status: 'active',
-        players: playerIds.map((playerId) => ({
-          playerId,
-          buyIns: [{ amount: initialBuyIn, timestamp: new Date().toISOString() }],
-        })),
+        players,
         ...(chipRate ? { chipRate } : {}),
       };
-      setGames((prev) => [newGame, ...prev]);
-      return newGame;
+
+      const docRef = await addDoc(col, payload);
+      return { id: docRef.id, ...payload };
     },
-    [setGames]
+    [uid]
   );
 
   const addBuyIn = useCallback(
-    (gameId: string, playerId: string, amount: number) => {
-      setGames((prev) =>
-        prev.map((game) => {
-          if (game.id !== gameId) return game;
-          return {
-            ...game,
-            players: game.players.map((gp) =>
-              gp.playerId !== playerId
-                ? gp
-                : {
-                    ...gp,
-                    buyIns: [
-                      ...gp.buyIns,
-                      { amount, timestamp: new Date().toISOString() },
-                    ],
-                  }
-            ),
-          };
-        })
+    async (gameId: string, playerId: string, amount: number) => {
+      if (!uid) return;
+      const game = games.find((g) => g.id === gameId);
+      if (!game) return;
+
+      const updatedPlayers = game.players.map((gp) =>
+        gp.playerId !== playerId
+          ? gp
+          : {
+              ...gp,
+              buyIns: [
+                ...gp.buyIns,
+                { amount, timestamp: new Date().toISOString() },
+              ],
+            }
       );
+
+      await updateDoc(doc(db, 'users', uid, 'games', gameId), {
+        players: updatedPlayers,
+      });
     },
-    [setGames]
+    [uid, games]
   );
 
   const removeBuyIn = useCallback(
-    (gameId: string, playerId: string, buyInIndex: number) => {
-      setGames((prev) =>
-        prev.map((game) => {
-          if (game.id !== gameId) return game;
-          return {
-            ...game,
-            players: game.players.map((gp) => {
-              if (gp.playerId !== playerId) return gp;
-              // Don't allow removing the last buy-in
-              if (gp.buyIns.length <= 1) return gp;
-              return {
-                ...gp,
-                buyIns: gp.buyIns.filter((_, i) => i !== buyInIndex),
-              };
-            }),
-          };
-        })
-      );
+    async (gameId: string, playerId: string, buyInIndex: number) => {
+      if (!uid) return;
+      const game = games.find((g) => g.id === gameId);
+      if (!game) return;
+
+      const updatedPlayers = game.players.map((gp) => {
+        if (gp.playerId !== playerId) return gp;
+        if (gp.buyIns.length <= 1) return gp;
+        return {
+          ...gp,
+          buyIns: gp.buyIns.filter((_, i) => i !== buyInIndex),
+        };
+      });
+
+      await updateDoc(doc(db, 'users', uid, 'games', gameId), {
+        players: updatedPlayers,
+      });
     },
-    [setGames]
+    [uid, games]
   );
 
   const updateBuyIn = useCallback(
-    (gameId: string, playerId: string, buyInIndex: number, newAmount: number) => {
-      setGames((prev) =>
-        prev.map((game) => {
-          if (game.id !== gameId) return game;
-          return {
-            ...game,
-            players: game.players.map((gp) => {
-              if (gp.playerId !== playerId) return gp;
-              return {
-                ...gp,
-                buyIns: gp.buyIns.map((b, i) =>
-                  i === buyInIndex ? { ...b, amount: newAmount } : b
-                ),
-              };
-            }),
-          };
-        })
-      );
+    async (
+      gameId: string,
+      playerId: string,
+      buyInIndex: number,
+      newAmount: number
+    ) => {
+      if (!uid) return;
+      const game = games.find((g) => g.id === gameId);
+      if (!game) return;
+
+      const updatedPlayers = game.players.map((gp) => {
+        if (gp.playerId !== playerId) return gp;
+        return {
+          ...gp,
+          buyIns: gp.buyIns.map((b, i) =>
+            i === buyInIndex ? { ...b, amount: newAmount } : b
+          ),
+        };
+      });
+
+      await updateDoc(doc(db, 'users', uid, 'games', gameId), {
+        players: updatedPlayers,
+      });
     },
-    [setGames]
+    [uid, games]
   );
 
   const completeGame = useCallback(
-    (
+    async (
       gameId: string,
       cashOuts: Record<string, number>,
       settlements: Settlement[]
     ) => {
-      setGames((prev) =>
-        prev.map((game) => {
-          if (game.id !== gameId) return game;
-          const updatedPlayers: GamePlayer[] = game.players.map((gp) => ({
-            ...gp,
-            cashOut: cashOuts[gp.playerId] ?? 0,
-          }));
-          return {
-            ...game,
-            status: 'completed',
-            players: updatedPlayers,
-            settlements,
-          };
-        })
-      );
+      if (!uid) return;
+      const game = games.find((g) => g.id === gameId);
+      if (!game) return;
+
+      const updatedPlayers: GamePlayer[] = game.players.map((gp) => ({
+        ...gp,
+        cashOut: cashOuts[gp.playerId] ?? 0,
+      }));
+
+      await updateDoc(doc(db, 'users', uid, 'games', gameId), {
+        status: 'completed',
+        players: updatedPlayers,
+        settlements,
+      });
     },
-    [setGames]
+    [uid, games]
   );
 
   const addPlayerToGame = useCallback(
-    (gameId: string, playerId: string, initialBuyIn: number) => {
-      setGames((prev) =>
-        prev.map((game) => {
-          if (game.id !== gameId) return game;
-          if (game.players.some((gp) => gp.playerId === playerId)) return game;
-          return {
-            ...game,
-            players: [
-              ...game.players,
-              {
-                playerId,
-                buyIns: [{ amount: initialBuyIn, timestamp: new Date().toISOString() }],
-              },
-            ],
-          };
-        })
-      );
+    async (gameId: string, playerId: string, initialBuyIn: number) => {
+      if (!uid) return;
+      const game = games.find((g) => g.id === gameId);
+      if (!game) return;
+      if (game.players.some((gp) => gp.playerId === playerId)) return;
+
+      const updatedPlayers = [
+        ...game.players,
+        {
+          playerId,
+          buyIns: [
+            { amount: initialBuyIn, timestamp: new Date().toISOString() },
+          ],
+        },
+      ];
+
+      await updateDoc(doc(db, 'users', uid, 'games', gameId), {
+        players: updatedPlayers,
+      });
     },
-    [setGames]
+    [uid, games]
   );
 
   const getGame = useCallback(

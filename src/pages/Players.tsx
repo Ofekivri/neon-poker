@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useGames } from '../hooks/useGames';
 import { computeNetBalances } from '../utils/settlement';
+import { useAuthContext } from '../contexts/AuthContext';
 
 function Icon({ name, className = '', fill = false }: { name: string; className?: string; fill?: boolean }) {
   return (
@@ -15,8 +16,9 @@ function Icon({ name, className = '', fill = false }: { name: string; className?
 }
 
 export default function Players() {
-  const { players, addPlayer, updatePlayer, deletePlayer } = usePlayers();
-  const { completedGames } = useGames();
+  const { user } = useAuthContext();
+  const { players, addPlayer, updatePlayer, deletePlayer } = usePlayers(user.uid);
+  const { completedGames } = useGames(user.uid);
   const [newName, setNewName] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');

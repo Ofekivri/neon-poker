@@ -3,14 +3,16 @@ import { useGames } from '../hooks/useGames';
 import { usePlayers } from '../hooks/usePlayers';
 import { computeNetBalances } from '../utils/settlement';
 import { loadMockData, clearAllData } from '../utils/mockData';
+import { useAuthContext } from '../contexts/AuthContext';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
 }
 
 export default function Dashboard() {
-  const { completedGames, activeGame } = useGames();
-  const { getPlayer } = usePlayers();
+  const { user } = useAuthContext();
+  const { completedGames, activeGame } = useGames(user.uid);
+  const { getPlayer } = usePlayers(user.uid);
   const navigate = useNavigate();
 
   // Build all-time leaderboard

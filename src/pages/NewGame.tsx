@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePlayers } from '../hooks/usePlayers';
 import { useGames } from '../hooks/useGames';
 import { shekelToChips } from '../utils/chips';
+import { useAuthContext } from '../contexts/AuthContext';
 import type { ChipRate } from '../types';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -11,8 +12,9 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 
 export default function NewGame() {
   const navigate = useNavigate();
-  const { players } = usePlayers();
-  const { createGame, activeGame } = useGames();
+  const { user } = useAuthContext();
+  const { players } = usePlayers(user.uid);
+  const { createGame, activeGame } = useGames(user.uid);
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [buyIn, setBuyIn] = useState(50);
@@ -39,9 +41,9 @@ export default function NewGame() {
 
   const startingChips = chipRate ? shekelToChips(buyIn, chipRate) : null;
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (selected.size < 2) return;
-    const game = createGame([...selected], buyIn, chipRate);
+    const game = await createGame([...selected], buyIn, chipRate);
     navigate(`/game/${game.id}`, { replace: true });
   };
 

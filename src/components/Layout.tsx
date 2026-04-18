@@ -1,12 +1,14 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
+import { useAuthContext } from '../contexts/AuthContext';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
 }
 
 export default function Layout() {
-  const { activeGame } = useGames();
+  const { user, signOut } = useAuthContext();
+  const { activeGame } = useGames(user.uid);
   const navigate = useNavigate();
 
   return (
@@ -23,6 +25,13 @@ export default function Layout() {
           </h1>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={signOut}
+            className="text-zinc-500 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-950/20"
+            title="Sign out"
+          >
+            <Icon name="logout" />
+          </button>
           <span className="hidden md:flex gap-6 text-zinc-500 font-bold uppercase tracking-widest text-xs">
             <NavLink
               to="/"
