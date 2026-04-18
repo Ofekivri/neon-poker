@@ -35,13 +35,16 @@ function BuyInModal({
   playerName,
   onConfirm,
   onClose,
+  chipRate,
 }: {
   playerName: string;
   onConfirm: (amount: number) => void;
   onClose: () => void;
+  chipRate?: ChipRate;
 }) {
   const [amount, setAmount] = useState(50);
   const adjust = (delta: number) => setAmount((prev) => Math.max(10, prev + delta));
+  const chipEquiv = chipRate ? shekelToChips(amount, chipRate) : null;
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-end justify-center z-[60]">
@@ -59,6 +62,9 @@ function BuyInModal({
           <div className="text-center">
             <span className="text-4xl font-black text-white">{amount}</span>
             <span className="text-xl text-zinc-500 ml-1">₪</span>
+            {chipEquiv !== null && (
+              <p className="text-xs text-red-400 font-bold mt-1">= {chipEquiv.toLocaleString()} chips</p>
+            )}
           </div>
           <button onClick={() => adjust(10)} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
             <Icon name="add" />
@@ -568,6 +574,9 @@ export default function LiveGame() {
         <div className="space-y-1">
           <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Current Pot Value</p>
           <h2 className="text-4xl font-black text-white tracking-tighter">₪{totalPot.toLocaleString()}</h2>
+          {game.chipRate && (
+            <p className="text-red-400 text-sm font-bold">{shekelToChips(totalPot, game.chipRate).toLocaleString()} chips in play</p>
+          )}
         </div>
         <div className="mt-6 flex items-center gap-3 text-zinc-400 bg-zinc-900/50 p-3 rounded-xl border border-zinc-800/50">
           <Icon name="timer" className="text-yellow-500" />
@@ -622,6 +631,9 @@ export default function LiveGame() {
                 <p className="text-zinc-500 text-sm">
                   Total In: <span className="text-white font-mono">₪{gp.total.toLocaleString()}</span>
                   {buyInCount > 1 && <span className="text-zinc-600 ml-1">({buyInCount}x)</span>}
+                  {game.chipRate && (
+                    <span className="text-red-400/70 ml-1 text-xs">({shekelToChips(gp.total, game.chipRate).toLocaleString()} chips)</span>
+                  )}
                 </p>
               </div>
 
@@ -677,6 +689,7 @@ export default function LiveGame() {
           playerName={getPlayerName(buyInTarget)}
           onConfirm={handleBuyIn}
           onClose={() => setBuyInTarget(null)}
+          chipRate={game.chipRate}
         />
       )}
 

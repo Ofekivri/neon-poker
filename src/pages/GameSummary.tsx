@@ -2,6 +2,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
 import { usePlayers } from '../hooks/usePlayers';
 import { computeNetBalances } from '../utils/settlement';
+import { shekelToChips } from '../utils/chips';
 
 function Icon({ name, className = '', fill = false }: { name: string; className?: string; fill?: boolean }) {
   return (
@@ -105,6 +106,9 @@ export default function GameSummary() {
                           style={{ color: isWinner ? '#22c55e' : '#ef4444' }}
                         >
                           {isWinner ? '+' : ''}₪{Math.abs(net).toFixed(0)}
+                          {game.chipRate && (
+                            <span className="text-zinc-500 ml-1">({shekelToChips(Math.abs(net), game.chipRate).toLocaleString()} chips)</span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -162,10 +166,13 @@ export default function GameSummary() {
                       <span className="font-black text-white uppercase">{toName}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="bg-black px-4 py-2 rounded-lg border border-red-900/30">
+                      <div className="bg-black px-4 py-2 rounded-lg border border-red-900/30 text-center">
                         <span className="font-black text-lg" style={{ color: '#facc15' }}>
                           ₪{s.amount}
                         </span>
+                        {game.chipRate && (
+                          <p className="text-zinc-500 text-[9px] font-bold">{shekelToChips(s.amount, game.chipRate).toLocaleString()} chips</p>
+                        )}
                       </div>
                       <Icon name="share" className="text-zinc-500 text-sm cursor-pointer hover:text-white" />
                     </div>
