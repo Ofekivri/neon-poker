@@ -206,11 +206,21 @@ function EndGameModal({
           })}
         </div>
 
-        <div className={`rounded-xl px-4 py-3 flex items-center justify-between text-sm ${balanced ? 'bg-green-900/20 border border-green-800/40' : 'bg-red-900/20 border border-red-800/40'}`}>
-          <span className={balanced ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-            {balanced ? '✓ Balanced' : diff > 0 ? `Over by ${diff.toFixed(0)} ₪` : `Under by ${Math.abs(diff).toFixed(0)} ₪`}
-          </span>
-          <span className="text-zinc-500 font-mono">{totalCashOut.toFixed(0)} / {totalPot} ₪</span>
+        <div className={`rounded-xl px-4 py-3 space-y-1 text-sm ${balanced ? 'bg-green-900/20 border border-green-800/40' : 'bg-red-900/20 border border-red-800/40'}`}>
+          <div className="flex items-center justify-between">
+            <span className={balanced ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
+              {balanced ? '✓ Balanced' : diff > 0 ? `Over by ${diff.toFixed(0)} ₪` : `Under by ${Math.abs(diff).toFixed(0)} ₪`}
+            </span>
+            <span className="text-zinc-500 font-mono">{totalCashOut.toFixed(0)} / {totalPot} ₪</span>
+          </div>
+          {chipRate && (
+            <div className="flex items-center justify-between text-xs">
+              <span className={balanced ? 'text-green-400/70' : 'text-red-400/70'}>
+                {balanced ? '' : diff > 0 ? `Over by ${shekelToChips(Math.abs(diff), chipRate).toLocaleString()} chips` : `Under by ${shekelToChips(Math.abs(diff), chipRate).toLocaleString()} chips`}
+              </span>
+              <span className="text-zinc-600 font-mono">{shekelToChips(totalCashOut, chipRate).toLocaleString()} / {shekelToChips(totalPot, chipRate).toLocaleString()} chips</span>
+            </div>
+          )}
         </div>
 
         <button onClick={handleConfirm} disabled={!balanced}
