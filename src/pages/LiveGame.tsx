@@ -638,7 +638,7 @@ export default function LiveGame() {
               </div>
 
               {/* Quick buy-in buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <button
                   onClick={() => { if (id) { addBuyIn(id, gp.playerId, 50); showToast(`₪50 buy-in added for ${name}`); } }}
                   className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 active:scale-95 transition-all"
@@ -652,10 +652,18 @@ export default function LiveGame() {
                   +100
                 </button>
                 <button
-                  onClick={() => setManageBuyInsTarget(gp.playerId)}
-                  className="material-symbols-outlined text-zinc-500 hover:text-red-500 transition-colors p-2"
+                  onClick={() => setBuyInTarget(gp.playerId)}
+                  className="bg-red-600/20 border border-red-600/30 hover:bg-red-600/30 px-2 py-2 rounded-xl text-xs font-bold text-red-400 active:scale-95 transition-all"
+                  title="Custom buy-in"
                 >
-                  more_vert
+                  <Icon name="add_circle" className="!text-lg" />
+                </button>
+                <button
+                  onClick={() => setManageBuyInsTarget(gp.playerId)}
+                  className="material-symbols-outlined text-zinc-500 hover:text-red-500 transition-colors p-1 !text-lg"
+                  title="Manage buy-ins"
+                >
+                  tune
                 </button>
               </div>
             </div>
