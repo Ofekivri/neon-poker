@@ -20,7 +20,7 @@ export default function GameSummary() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { getGame, loading } = useGames(user.uid);
+  const { getGame, deleteGame, loading } = useGames(user.uid);
   const { getPlayer } = usePlayers(user.uid);
 
   const game = id ? getGame(id) : undefined;
@@ -52,6 +52,13 @@ export default function GameSummary() {
 
   const getPlayerName = (pid: string) => getPlayer(pid)?.name ?? 'Unknown';
   const getInitials = (name: string) => name.slice(0, 2).toUpperCase();
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!window.confirm('Delete this session permanently? All data and player profits for this game will be removed.')) return;
+    await deleteGame(id);
+    navigate('/');
+  };
 
   return (
     <div className="space-y-8 -mx-6 -mt-24">
@@ -204,6 +211,13 @@ export default function GameSummary() {
           <button className="w-full flex items-center justify-center gap-3 bg-zinc-800 border border-zinc-700 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-sm hover:bg-zinc-700 transition-colors">
             <Icon name="chat" className="text-green-500" />
             Share Summary
+          </button>
+          <button
+            onClick={handleDelete}
+            className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-red-900/50 text-red-500 font-black py-4 rounded-2xl uppercase tracking-widest text-sm hover:bg-red-950/30 active:scale-[0.97] transition-all"
+          >
+            <Icon name="delete" />
+            Delete Session
           </button>
           <button
             onClick={() => navigate('/')}
