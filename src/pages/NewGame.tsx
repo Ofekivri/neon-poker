@@ -132,8 +132,8 @@ export default function NewGame() {
             {chipRate && (
               <p className="text-center text-zinc-400 text-xs font-bold">
                 Each player starts with{' '}
-                <span className="text-red-400">{shekelToChips(buyIn, chipRate).toLocaleString()} chips</span>
-                {' '}for {buyIn}₪
+                <span className="text-red-400">{shekelToChips(effectiveBuyIn, chipRate).toLocaleString()} chips</span>
+                {' '}for {effectiveBuyIn}₪
               </p>
             )}
           </div>

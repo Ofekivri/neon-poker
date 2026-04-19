@@ -1,4 +1,4 @@
-import type { Player, Game } from '../types';
+import type { Player } from '../types';
 import { calculateSettlements } from './settlement';
 import {
   collection,

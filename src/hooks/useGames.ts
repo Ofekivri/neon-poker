@@ -4,6 +4,7 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
+  deleteDoc,
   doc,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -181,6 +182,14 @@ export function useGames(uid: string | undefined) {
     [uid, games]
   );
 
+  const deleteGame = useCallback(
+    async (gameId: string) => {
+      if (!uid) return;
+      await deleteDoc(doc(db, 'users', uid, 'games', gameId));
+    },
+    [uid]
+  );
+
   const getGame = useCallback(
     (gameId: string) => games.find((g) => g.id === gameId),
     [games]
@@ -201,6 +210,7 @@ export function useGames(uid: string | undefined) {
     updateBuyIn,
     addPlayerToGame,
     completeGame,
+    deleteGame,
     getGame,
   };
 }
