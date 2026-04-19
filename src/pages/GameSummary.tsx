@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuthContext } from '../contexts/AuthContext';
+import { useToast } from '../hooks/useToast';
+import ToastContainer from '../components/ToastContainer';
 import { computeNetBalances } from '../utils/settlement';
 import { shekelToChips } from '../utils/chips';
 
@@ -22,6 +25,8 @@ export default function GameSummary() {
   const { user } = useAuthContext();
   const { getGame, deleteGame, loading } = useGames(user.uid);
   const { getPlayer } = usePlayers(user.uid);
+  const { toasts, showToast, dismissToast } = useToast();
+  const [deleting, setDeleting] = useState(false);
 
   const game = id ? getGame(id) : undefined;
 
@@ -54,10 +59,16 @@ export default function GameSummary() {
   const getInitials = (name: string) => name.slice(0, 2).toUpperCase();
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id || deleting) return;
     if (!window.confirm('Delete this session permanently? All data and player profits for this game will be removed.')) return;
-    await deleteGame(id);
-    navigate('/');
+    setDeleting(true);
+    try {
+      await deleteGame(id);
+      navigate('/');
+    } catch {
+      showToast('Failed to delete session', 'error');
+      setDeleting(false);
+    }
   };
 
   return (
@@ -214,10 +225,11 @@ export default function GameSummary() {
           </button>
           <button
             onClick={handleDelete}
-            className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-red-900/50 text-red-500 font-black py-4 rounded-2xl uppercase tracking-widest text-sm hover:bg-red-950/30 active:scale-[0.97] transition-all"
+            disabled={deleting}
+            className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-red-900/50 text-red-500 font-black py-4 rounded-2xl uppercase tracking-widest text-sm hover:bg-red-950/30 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             <Icon name="delete" />
-            Delete Session
+            {deleting ? 'Deleting…' : 'Delete Session'}
           </button>
           <button
             onClick={() => navigate('/')}
@@ -228,6 +240,7 @@ export default function GameSummary() {
           </button>
         </section>
       </main>
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
