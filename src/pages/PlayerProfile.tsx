@@ -37,7 +37,7 @@ export default function PlayerProfile() {
   const navigate = useNavigate();
   const { user } = useAuthContext();
   const { completedGames, loading } = useGames(user.uid);
-  const { getPlayer, players } = usePlayers(user.uid);
+  const { getPlayer } = usePlayers(user.uid);
 
   if (loading) {
     return (
