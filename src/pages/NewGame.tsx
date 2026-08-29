@@ -4,15 +4,13 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useGames } from '../hooks/useGames';
 import { useSettings } from '../hooks/useSettings';
 import { shekelToChips } from '../utils/chips';
+import { BUY_IN_STEP, BUY_IN_MIN, BUY_IN_PRESETS } from '../utils/buyIn';
 import { useAuthContext } from '../contexts/AuthContext';
 import type { ChipRate } from '../types';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>;
 }
-
-const BUY_IN_STEP = 5;
-const BUY_IN_MIN = 5;
 
 export default function NewGame() {
   const navigate = useNavigate();
@@ -84,7 +82,7 @@ export default function NewGame() {
           </button>
         </div>
         <div className="flex gap-2 mt-4 justify-center">
-          {[20, 25, 50, 100].map((v) => (
+          {BUY_IN_PRESETS.map((v) => (
             <button key={v} onClick={() => setBuyIn(v)}
               className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-colors ${
                 effectiveBuyIn === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white'
