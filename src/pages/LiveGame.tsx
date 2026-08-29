@@ -7,6 +7,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import ToastContainer from '../components/ToastContainer';
 import { calculateSettlements, computeNetBalances } from '../utils/settlement';
 import { chipsToShekel, shekelToChips } from '../utils/chips';
+import { BUY_IN_STEP, BUY_IN_MIN, BUY_IN_PRESETS } from '../utils/buyIn';
 import type { ChipRate } from '../types';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -44,7 +45,7 @@ function BuyInModal({
   chipRate?: ChipRate;
 }) {
   const [amount, setAmount] = useState(50);
-  const adjust = (delta: number) => setAmount((prev) => Math.max(10, prev + delta));
+  const adjust = (delta: number) => setAmount((prev) => Math.max(BUY_IN_MIN, prev + delta));
   const chipEquiv = chipRate ? shekelToChips(amount, chipRate) : null;
 
   return (
@@ -57,7 +58,7 @@ function BuyInModal({
           </button>
         </div>
         <div className="flex items-center justify-between bg-zinc-800/50 rounded-xl p-4 border border-zinc-800">
-          <button onClick={() => adjust(-10)} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
+          <button onClick={() => adjust(-BUY_IN_STEP)} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
             <Icon name="remove" />
           </button>
           <div className="text-center">
@@ -67,12 +68,12 @@ function BuyInModal({
               <p className="text-xs text-red-400 font-bold mt-1">= {chipEquiv.toLocaleString()} chips</p>
             )}
           </div>
-          <button onClick={() => adjust(10)} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
+          <button onClick={() => adjust(BUY_IN_STEP)} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
             <Icon name="add" />
           </button>
         </div>
         <div className="flex gap-2 justify-center">
-          {[20, 50, 100, 200].map((v) => (
+          {BUY_IN_PRESETS.map((v) => (
             <button key={v} onClick={() => setAmount(v)}
               className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${amount === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white'}`}>
               {v}₪
@@ -167,11 +168,11 @@ function EndGameModal({
                 {isOpen && (
                   <div className="bg-zinc-900 rounded-xl p-3 space-y-2 border border-zinc-800">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setBuyInAmount(v => Math.max(10, v - 10))} className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
+                      <button onClick={() => setBuyInAmount(v => Math.max(BUY_IN_MIN, v - BUY_IN_STEP))} className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
                         <Icon name="remove" className="!text-sm" />
                       </button>
                       <span className="flex-1 text-center text-white font-black text-lg">{buyInAmount} ₪</span>
-                      <button onClick={() => setBuyInAmount(v => v + 10)} className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
+                      <button onClick={() => setBuyInAmount(v => v + BUY_IN_STEP)} className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
                         <Icon name="add" className="!text-sm" />
                       </button>
                     </div>
@@ -305,7 +306,7 @@ function ManageBuyInsModal({
                       <span className="text-zinc-600 text-xs">{time}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => setEditAmount(v => Math.max(10, v - 10))}
+                      <button onClick={() => setEditAmount(v => Math.max(BUY_IN_MIN, v - BUY_IN_STEP))}
                         className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
                         <Icon name="remove" className="!text-sm" />
                       </button>
@@ -313,13 +314,13 @@ function ManageBuyInsModal({
                         <span className="text-2xl font-black text-white">{editAmount}</span>
                         <span className="text-zinc-500 ml-1">₪</span>
                       </div>
-                      <button onClick={() => setEditAmount(v => v + 10)}
+                      <button onClick={() => setEditAmount(v => v + BUY_IN_STEP)}
                         className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700">
                         <Icon name="add" className="!text-sm" />
                       </button>
                     </div>
                     <div className="flex gap-2 justify-center">
-                      {[20, 50, 100, 200].map((v) => (
+                      {BUY_IN_PRESETS.map((v) => (
                         <button key={v} onClick={() => setEditAmount(v)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${editAmount === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400'}`}>
                           {v}₪
@@ -475,19 +476,19 @@ function AddPlayerModal({
             <div className="space-y-3">
               <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Initial Buy-In</p>
               <div className="flex items-center justify-between bg-zinc-800/50 rounded-xl p-4 border border-zinc-800">
-                <button onClick={() => setBuyIn(v => Math.max(10, v - 10))} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
+                <button onClick={() => setBuyIn(v => Math.max(BUY_IN_MIN, v - BUY_IN_STEP))} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
                   <Icon name="remove" />
                 </button>
                 <div className="text-center">
                   <span className="text-4xl font-black text-white">{buyIn}</span>
                   <span className="text-xl text-zinc-500 ml-1">₪</span>
                 </div>
-                <button onClick={() => setBuyIn(v => v + 10)} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
+                <button onClick={() => setBuyIn(v => v + BUY_IN_STEP)} className="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white transition-colors border border-zinc-700">
                   <Icon name="add" />
                 </button>
               </div>
               <div className="flex gap-2 justify-center">
-                {[20, 50, 100, 200].map((v) => (
+                {BUY_IN_PRESETS.map((v) => (
                   <button key={v} onClick={() => setBuyIn(v)}
                     className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${buyIn === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white'}`}>
                     {v}₪

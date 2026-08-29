@@ -4,6 +4,7 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useGames } from '../hooks/useGames';
 import { useSettings } from '../hooks/useSettings';
 import { shekelToChips } from '../utils/chips';
+import { BUY_IN_STEP, BUY_IN_MIN, BUY_IN_PRESETS } from '../utils/buyIn';
 import { useAuthContext } from '../contexts/AuthContext';
 import type { ChipRate } from '../types';
 
@@ -64,7 +65,7 @@ export default function NewGame() {
       <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
         <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">Starting Buy-In</p>
         <div className="flex items-center justify-between">
-          <button onClick={() => setBuyIn(Math.max(10, effectiveBuyIn - 10))}
+          <button onClick={() => setBuyIn(Math.max(BUY_IN_MIN, effectiveBuyIn - BUY_IN_STEP))}
             className="w-12 h-12 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700 transition-colors">
             <Icon name="remove" />
           </button>
@@ -75,13 +76,13 @@ export default function NewGame() {
               <p className="text-xs text-red-400 font-bold mt-1">= {startingChips.toLocaleString()} chips</p>
             )}
           </div>
-          <button onClick={() => setBuyIn(effectiveBuyIn + 10)}
+          <button onClick={() => setBuyIn(effectiveBuyIn + BUY_IN_STEP)}
             className="w-12 h-12 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-white border border-zinc-700 transition-colors">
             <Icon name="add" />
           </button>
         </div>
         <div className="flex gap-2 mt-4 justify-center">
-          {[20, 50, 100, 200].map((v) => (
+          {BUY_IN_PRESETS.map((v) => (
             <button key={v} onClick={() => setBuyIn(v)}
               className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-colors ${
                 effectiveBuyIn === v ? 'bg-red-600 text-white' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white'
