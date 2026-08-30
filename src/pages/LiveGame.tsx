@@ -7,7 +7,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import ToastContainer from '../components/ToastContainer';
 import { calculateSettlements, computeNetBalances } from '../utils/settlement';
 import { chipsToShekel, shekelToChips } from '../utils/chips';
-import { BUY_IN_STEP, BUY_IN_MIN, BUY_IN_PRESETS } from '../utils/buyIn';
+import { BUY_IN_STEP, BUY_IN_MIN, BUY_IN_PRESETS, QUICK_BUY_INS } from '../utils/buyIn';
 import type { ChipRate } from '../types';
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -662,18 +662,15 @@ export default function LiveGame() {
 
               {/* Quick buy-in buttons */}
               <div className="flex gap-2 items-center">
-                <button
-                  onClick={() => { if (id) { addBuyIn(id, gp.playerId, 50); showToast(`₪50 buy-in added for ${name}`); } }}
-                  className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 active:scale-95 transition-all"
-                >
-                  +50
-                </button>
-                <button
-                  onClick={() => { if (id) { addBuyIn(id, gp.playerId, 100); showToast(`₪100 buy-in added for ${name}`); } }}
-                  className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 active:scale-95 transition-all"
-                >
-                  +100
-                </button>
+                {QUICK_BUY_INS.map((amount) => (
+                  <button
+                    key={amount}
+                    onClick={() => { if (id) { addBuyIn(id, gp.playerId, amount); showToast(`₪${amount} buy-in added for ${name}`); } }}
+                    className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-2.5 py-2 rounded-xl text-xs font-bold text-zinc-300 active:scale-95 transition-all"
+                  >
+                    +{amount}
+                  </button>
+                ))}
                 <button
                   onClick={() => setBuyInTarget(gp.playerId)}
                   className="bg-red-600/20 border border-red-600/30 hover:bg-red-600/30 px-2 py-2 rounded-xl text-xs font-bold text-red-400 active:scale-95 transition-all"
