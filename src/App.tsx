@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import EnvBanner from './components/EnvBanner';
 import Dashboard from './pages/Dashboard';
 import Players from './pages/Players';
 import NewGame from './pages/NewGame';
@@ -16,20 +17,29 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <span className="material-symbols-outlined text-red-600 text-5xl animate-spin">
-          progress_activity
-        </span>
-      </div>
+      <>
+        <EnvBanner />
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <span className="material-symbols-outlined text-red-600 text-5xl animate-spin">
+            progress_activity
+          </span>
+        </div>
+      </>
     );
   }
 
   if (!user) {
-    return <Login onSignIn={signIn} onSignUp={signUp} />;
+    return (
+      <>
+        <EnvBanner />
+        <Login onSignIn={signIn} onSignUp={signUp} />
+      </>
+    );
   }
 
   return (
     <AuthContext.Provider value={{ user, signOut }}>
+      <EnvBanner />
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
